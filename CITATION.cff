@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use vault-recall in research or software, please cite it as below."
+title: "vault-recall"
+type: software
+authors:
+  - family-names: Dziatkovskii
+    given-names: Anton
+    orcid: "https://orcid.org/0000-0001-7408-3054"
+    affiliation: "Palo Alto AI Research Lab"
+repository-code: "https://github.com/tonydzi/vault-recall"
+url: "https://github.com/tonydzi/vault-recall"
+abstract: >-
+  Semantic recall over a folder of markdown notes as a local HTTP and MCP memory backend for coding agents, with pluggable vector stores: numpy, sqlite-vec, LanceDB, Qdrant, pgvector, chDB.
