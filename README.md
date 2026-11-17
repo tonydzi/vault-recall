@@ -107,3 +107,7 @@ python test_vault_recall.py     # 22 end-to-end checks on a throwaway vault, exi
 ## License
 
 MIT. Anton Dziatkovskii, [github.com/tonydzi](https://github.com/tonydzi).
+
+## AI contributors
+
+This project is built by a human + AI team. Credit for AI tools on commits follows one policy, one source for every repo: [AI-CONTRIBUTORS.md](https://github.com/tonydzi/.github/blob/main/AI-CONTRIBUTORS.md).
