@@ -147,7 +147,7 @@ class LanceDBBackend:
 
 
 class QdrantBackend:
-    """Qdrant local mode: on-disk HNSW in one directory, payload filter on `type`. Point QDRANT_URL at a server to leave local mode."""
+    """Qdrant local mode: exact search in one directory, payload filter on `type`. Point QDRANT_URL at a server to leave local mode."""
     name = "qdrant"
     COLL = "vault_recall"
 
@@ -161,11 +161,17 @@ class QdrantBackend:
         self.dim = dim
         if not self.client.collection_exists(self.COLL):
             self.client.create_collection(self.COLL, vectors_config=m.VectorParams(size=dim, distance=m.Distance.COSINE))
+        else:
+            current = self.client.get_collection(self.COLL).config.params.vectors
+            if getattr(current, "size", None) != dim:
+                self.client.close()
+                raise ValueError("Qdrant mirror vector dimensions differ; use a fresh index directory")
 
     def replace_all(self, meta, vecs):
         m = self.m
-        self.client.delete_collection(self.COLL)
-        self.client.create_collection(self.COLL, vectors_config=m.VectorParams(size=self.dim, distance=m.Distance.COSINE))
+        # Keep the collection: deleting/recreating it can strand local SQLite
+        # handles on Windows. Clear points through the public delete API instead.
+        self.client.delete(self.COLL, points_selector=m.FilterSelector(filter=m.Filter()), wait=True)
         batch = 512
         for s in range(0, len(meta), batch):
             pts = [m.PointStruct(id=i, vector=vecs[i].astype("float32").tolist(), payload={"type": meta[i]["type"]})

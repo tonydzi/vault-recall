@@ -268,10 +268,26 @@ class Index:
             return []
         meta, vecs = self.meta, self.vecs
         q = embed([query], "query")[0]
-        eng = self._engine()
-        if eng is not None:                              # engine returns (chunk_index, score), best first
-            cands = eng.search(q, DENSE_TOP * 4, scope)
-        else:
+        # Local stores own file handles/table snapshots. Release each query's reader
+        # before a later rebuild, rather than caching a stale table or directory lock.
+        with self._lock:
+            eng = self._engine()
+            if eng is not None:                          # best (chunk_index, score) first
+                search_failed = False
+                try:
+                    cands = eng.search(q, DENSE_TOP * 4, scope)
+                except BaseException:
+                    search_failed = True
+                    raise
+                finally:
+                    if self.backend_name in ("lancedb", "qdrant"):
+                        self._backend = None
+                        try:
+                            eng.close()
+                        except Exception:
+                            if not search_failed:
+                                raise
+        if eng is None:
             sims = vecs @ q
             if scope:
                 allowed = np.array([c["type"] in scope for c in meta])
